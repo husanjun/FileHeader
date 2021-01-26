@@ -2,7 +2,7 @@
 # @Author: Lime
 # @Date:   2013-10-28 13:39:48
 # @Last Modified by:   hujunjun_0117@163.com
-# @Last Modified time: 2021/01/26 16:55
+# @Last Modified time: 2021/01/26 17:41
 
 import os
 import sys
@@ -888,7 +888,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
 
 
 class FileHeaderEnableInProjectCommand(sublime_plugin.WindowCommand):
-    def run(self) -> None:
+    def run(self, **args) -> None:
         setting = Settings().get('enable_add_template_on_save');
         if setting:
             self.window.status_message("To enable successful")
@@ -900,7 +900,7 @@ class FileHeaderEnableInProjectCommand(sublime_plugin.WindowCommand):
         
 
 class FileHeaderDisableInProjectCommand(sublime_plugin.WindowCommand):
-    def run(self) -> None:
+    def run(self, **args) -> None:
         setting = Settings().get('enable_add_template_on_save');
         if not setting:
             self.window.status_message("To disable successful")
@@ -921,7 +921,7 @@ def update_status_in_project(status: bool) -> None:
 
 
 class FileHeaderEnableCommand(sublime_plugin.WindowCommand):
-    def run(self) -> None:
+    def run(self, **args) -> None:
         global settings_obj
         if settings_obj.get('enable_add_template_on_save'):
             self.window.status_message("To enable successful")
@@ -931,7 +931,7 @@ class FileHeaderEnableCommand(sublime_plugin.WindowCommand):
 
 
 class FileHeaderDisableCommand(sublime_plugin.WindowCommand):
-    def run(self) -> None:
+    def run(self, **args) -> None:
         global settings_obj
         if not settings_obj.get('enable_add_template_on_save'):
             self.window.status_message("To disable successful")
