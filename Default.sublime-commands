@@ -12,5 +12,33 @@
         "args": {
             "paths": []
         }
+    },
+    {
+        "caption": "FileHeader: Enable",
+        "command": "file_header_enable",
+        "args": {
+            "paths": []
+        }
+    },
+    {
+        "caption": "FileHeader: Disable",
+        "command": "file_header_disable",
+        "args": {
+            "paths": []
+        }
+    },
+    {
+        "caption": "FileHeader: Enable in project",
+        "command": "file_header_enable_in_project",
+        "args": {
+            "paths": []
+        }
+    },
+    {
+        "caption": "FileHeader: Disable in project",
+        "command": "file_header_disable_in_project",
+        "args": {
+            "paths": []
+        }
     }
 ]

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Lime
 # @Date:   2013-10-28 13:39:48
-# @Last Modified by:   Abad Vera
-# @Last Modified time: 2019-09-26 09:53:39
+# @Last Modified by:   hujunjun_0117@163.com
+# @Last Modified time: 2021/01/26 16:55
 
 import os
 import sys
@@ -92,6 +92,25 @@ IS_ST3 = sublime.version() >= '3'
 
 sys.path.insert(0, PLUGIN_PATH)
 
+settings_obj = None
+SETTINGS_LIST = [
+    'time_format',
+    'custom_time_format',
+    'enable_add_template_on_save',
+    'enable_add_template_to_empty_file',
+    'custom_template_header_path',
+    'custom_template_body_path',
+    'show_input_panel_when_add_header',
+    'open_file_when_add_header_to_directory',
+    'enable_add_header_to_hidden_dir',
+    'enable_add_header_to_hidden_file',
+    'syntax_when_not_match',
+    'file_suffix_mapping',
+    'header_prefix_mapping',
+    'language_syntax_mapping',
+    'extension_equivalence',
+    'Default'
+]
 
 def plugin_loaded():
     '''ST3'''
@@ -103,9 +122,13 @@ def plugin_loaded():
     global BODY_PATH
     global INSTALLED_PLGIN_PATH
     global IS_ST3
+    global settings_obj
+
 
     PLUGIN_NAME = 'FileHeader'
     INSTALLED_PLUGIN_NAME = '%s.sublime-package' % PLUGIN_NAME
+
+    settings_obj = sublime.load_settings('%s.sublime-settings' % PLUGIN_NAME)
 
     PACKAGES_PATH = sublime.packages_path()
     PLUGIN_PATH = os.path.join(PACKAGES_PATH, PLUGIN_NAME)
@@ -156,12 +179,40 @@ def Window():
 
     return sublime.active_window()
 
+# def project_data():
+
+#     window = Window()
+#     if not window:
+#         return
+#     if hasattr(window, 'project_data'):
+#         return window.project_data()
+#     # get the project file, returning None if it doesn't exist, just like ST3's get_project_file()
+#     project_file_name = window.project_file_name()
+#     if not project_file_name:
+#         return
+#     # read the project json file
+#     try:
+#         with open(project_file_name) as fp:
+#             return json.load(fp, strict=False)
+#     except IOError:
+#         pass
 
 def Settings():
     '''Get settings'''
+    global settings_obj
+    settings = {}
+    if settings_obj is None:
+        return
+    # print ("Python Version {}".format(str(sys.version).replace('\n', '')))
+    for setting in SETTINGS_LIST:
+        settings.setdefault(setting,settings_obj.get(setting))
 
-    return sublime.load_settings('%s.sublime-settings' % PLUGIN_NAME)
-
+    # # override basic plugin settings with settings from .sublime-project file
+    project_settings = View().settings().get(PLUGIN_NAME)
+    if project_settings is not None:
+        settings.update(project_settings)
+    # print(settings)
+    return settings
 
 def get_template_part(syntax_type, part):
     '''Get template header or body'''
@@ -179,8 +230,8 @@ def get_template_part(syntax_type, part):
             tmplate_path = path
 
     try:
-        with open(tmplate_path, 'rb') as f:
-            contents = f.read().decode('utf-8')
+        with open(tmplate_path, 'r') as f:
+            contents = f.read()
     except:
         contents = ''
     return contents
@@ -209,35 +260,18 @@ def get_strftime():
     return format
 
 
-def get_user_data_from_git(attr, default=None):
-    '''Get attr of 'user' object from GIT's config'''
+def get_user():
+    '''Get user'''
 
-    if not attr:
-        return default
-
-    value = default
-    prefix = 'cd %s && git ' % get_dir_path()
-
-    output, error = getOutputError(prefix + 'status')
+    user = getpass.getuser()
+    output, error = getOutputError(
+        'cd {0} && git status'.format(get_dir_path()))
 
     if not error:
-        output, error = getOutputError(prefix + 'config --get user.%s' % attr)
+        output, error = getOutputError('git config --get user.name')
         if not error and output:
-            value = output
-
-    return value
-
-
-def get_author():
-    '''Get author'''
-
-    return get_user_data_from_git('name', getpass.getuser())
-
-
-def get_email():
-    '''Get email'''
-
-    return get_user_data_from_git('email')
+            user = output
+    return user
 
 
 def get_project_name():
@@ -341,14 +375,11 @@ def get_args(syntax_type, options={}):
     if IS_ST3:
         args.update({'project_name': get_project_name()})
 
-    author = get_author()
+    user = get_user()
     if 'author' not in args:
-        args.update({'author': author})
+        args.update({'author': user})
     if 'last_modified_by' not in args:
-        args.update({'last_modified_by': author})
-
-    if 'email' not in args:
-        args.update({'email': get_email()})
+        args.update({'last_modified_by': user})
 
     return args
 
@@ -488,8 +519,8 @@ class FileHeaderNewFileCommand(sublime_plugin.WindowCommand):
         header = get_header_content(syntax_type, path)
 
         try:
-            with open(path, 'w+b') as f:
-                f.write(header.encode('utf-8'))
+            with open(path, 'w+') as f:
+                f.write(header)
 
         except Exception as e:
             sublime.error_message(str(e))
@@ -563,15 +594,15 @@ class BackgroundAddHeaderThread(threading.Thread):
         syntax_type = get_syntax_type(self.path)
 
         try:
-            with open(self.path, 'rb') as f:
-                file = f.read().decode('utf-8')
+            with open(self.path, 'r') as f:
+                file = f.read()
 
             if not template_header_exists(file, syntax_type):
                 header_content = get_header_content(
                     syntax_type, self.path, file)
                 contents = get_file_content(file, syntax_type, header_content)
-                with open(self.path, 'wb') as f:
-                    f.write(contents.encode('utf-8'))
+                with open(self.path, 'w') as f:
+                    f.write(contents)
 
         except Exception as e:
             sublime.error_message(str(e))
@@ -854,3 +885,56 @@ class FileHeaderListener(sublime_plugin.EventListener):
             settings.set('c_time', pickle.dumps(c_time))
 
         self.insert_template(view, True)
+
+
+class FileHeaderEnableInProjectCommand(sublime_plugin.WindowCommand):
+    def run(self) -> None:
+        setting = Settings().get('enable_add_template_on_save');
+        if setting:
+            self.window.status_message("To enable successful")
+        else:
+            self._on_done()
+            
+    def _on_done(self) -> None:
+        update_status_in_project(True)
+        
+
+class FileHeaderDisableInProjectCommand(sublime_plugin.WindowCommand):
+    def run(self) -> None:
+        setting = Settings().get('enable_add_template_on_save');
+        if not setting:
+            self.window.status_message("To disable successful")
+        else:
+            self._on_done()
+
+    def _on_done(self) -> None:
+        update_status_in_project(False)
+
+
+def update_status_in_project(status: bool) -> None:
+    project_data = Window().project_data()
+    if isinstance(project_data, dict):
+        project_settings = project_data.setdefault('settings', dict())
+        plugin_settings = project_settings.setdefault(PLUGIN_NAME, dict())
+        plugin_settings['enable_add_template_on_save'] = status
+        Window().set_project_data(project_data)
+
+
+class FileHeaderEnableCommand(sublime_plugin.WindowCommand):
+    def run(self) -> None:
+        global settings_obj
+        if settings_obj.get('enable_add_template_on_save'):
+            self.window.status_message("To enable successful")
+        else:
+            settings_obj.set('enable_add_template_on_save', True)
+        sublime.save_settings('%s.sublime-settings' % PLUGIN_NAME)
+
+
+class FileHeaderDisableCommand(sublime_plugin.WindowCommand):
+    def run(self) -> None:
+        global settings_obj
+        if not settings_obj.get('enable_add_template_on_save'):
+            self.window.status_message("To disable successful")
+        else:
+            settings_obj.set('enable_add_template_on_save', False)
+        sublime.save_settings('%s.sublime-settings' % PLUGIN_NAME)
