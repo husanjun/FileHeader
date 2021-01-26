@@ -203,6 +203,11 @@
             Can't be set custom.
         */
 
+        /*
+        Email
+        */
+        "email": "email@example.com"
+
         // You can add more here......
     },
     /*
