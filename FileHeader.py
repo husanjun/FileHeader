@@ -768,6 +768,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
     FILE_PATH_REGEX = re.compile('\{\{\s*file_path\s*\}\}')
 
     new_view_id = []
+    command_history = []
 
     def update_automatically(self, view, what):
         syntax_type = get_syntax_type(view.file_name())
@@ -844,6 +845,13 @@ class FileHeaderListener(sublime_plugin.EventListener):
 
     def on_new_async(self, view):
         FileHeaderListener.new_view_id.append(view.id())
+
+    def on_post_window_command(self, window, command_name, args):
+        if command_name == 'side_bar_duplicate':
+            self.command_history.append(command_name)
+        if command_name == 'exec' and 'side_bar_duplicate' in self.command_history:
+            self.command_history.clear()
+            self.insert_template(window.active_view(), False)
 
     def on_text_command(self, view, command_name, args):
         if command_name == 'undo' or command_name == 'soft_undo':
