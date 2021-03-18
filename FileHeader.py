@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Lime
 # @Date:   2013-10-28 13:39:48
-# @Last Modified by:   hujunjun_0117@163.com
-# @Last Modified time: 2021/01/26 17:41
+# @Last Modified by:   hujunjun117@163.com
+# @Last Modified time: 2021/03/18 14:40
 
 import os
 import sys
@@ -827,8 +827,8 @@ class FileHeaderListener(sublime_plugin.EventListener):
             'enable_add_template_to_empty_file', True)
 
         path = view.file_name()
-        condition = (path and enable_add_template_to_empty_file
-                     and view.size() <= 0)
+        # condition = (path and enable_add_template_to_empty_file and view.size() <= 0)
+        condition = (path and enable_add_template_to_empty_file)
 
         if exists:
             condition = (
@@ -842,7 +842,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
             block(view, view.run_command, 'add_file_header', {'path': path})
             block(view, view.show, 0)
 
-    def on_new(self, view):
+    def on_new_async(self, view):
         FileHeaderListener.new_view_id.append(view.id())
 
     def on_text_command(self, view, command_name, args):
@@ -851,8 +851,7 @@ class FileHeaderListener(sublime_plugin.EventListener):
                 view.run_command('undo')
 
     def on_pre_save(self, view):
-        enable_add_template_on_save = Settings().get(
-            'enable_add_template_on_save', False)
+        enable_add_template_on_save = Settings().get('enable_add_template_on_save', False)
         file_name = view.file_name()
 
         if isinstance(enable_add_template_on_save, str):
