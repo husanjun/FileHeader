@@ -441,6 +441,7 @@ def get_syntax_file(syntax_type):
 
 def get_content_index(haystack, needle):
     '''Get the right needle position in haystack'''
+    needle = needle.rstrip('\n').rstrip('\r')
     pos = haystack.find(needle)
     return pos + len(needle) if pos >= 0 else 0
 
@@ -458,9 +459,15 @@ def get_header_prefix(syntax_type, default=''):
 def get_header_content(syntax_type, path=None, file=None):
     '''Get the correctly computed header content'''
     header_prefix = get_header_prefix(syntax_type)
-    content = '' if isinstance(
-        file, str) and header_prefix in file else header_prefix
-    return content + render_template(syntax_type, 'header', {'path': path})
+    _header_prefix = header_prefix.rstrip('\n').rstrip('\r')
+
+    if isinstance(file, str):
+        if header_prefix in file:
+            header_prefix = ''
+        elif _header_prefix in file:
+            header_prefix = header_prefix.replace(_header_prefix, '')
+
+    return header_prefix + render_template(syntax_type, 'header', {'path': path})
 
 
 def get_file_content(file, syntax_type, header):
