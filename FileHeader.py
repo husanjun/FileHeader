@@ -224,8 +224,8 @@ def get_template_part(syntax_type, part):
             tmplate_path = path
 
     try:
-        with open(tmplate_path, 'r') as f:
-            contents = f.read()
+        with open(tmplate_path, 'rb') as f:
+            contents = f.read().decode('utf-8')
     except:
         contents = ''
     return contents
@@ -254,18 +254,35 @@ def get_strftime():
     return format
 
 
-def get_user():
-    '''Get user'''
+def get_user_data_from_git(attr, default=None):
+    '''Get attr of 'user' object from GIT's config'''
 
-    user = getpass.getuser()
-    output, error = getOutputError(
-        'cd {0} && git status'.format(get_dir_path()))
+    if not attr:
+        return default
+
+    value = default
+    prefix = 'cd %s && git ' % get_dir_path()
+
+    output, error = getOutputError(prefix + 'status')
 
     if not error:
-        output, error = getOutputError('git config --get user.name')
+        output, error = getOutputError(prefix + 'config --get user.%s' % attr)
         if not error and output:
-            user = output
-    return user
+            value = output
+
+    return value
+
+
+def get_author():
+    '''Get author'''
+
+    return get_user_data_from_git('name', getpass.getuser())
+
+
+def get_email():
+    '''Get email'''
+
+    return get_user_data_from_git('email')
 
 
 def get_project_name():
@@ -369,11 +386,14 @@ def get_args(syntax_type, options={}):
     if IS_ST3:
         args.update({'project_name': get_project_name()})
 
-    user = get_user()
+    author = get_author()
     if 'author' not in args:
-        args.update({'author': user})
+        args.update({'author': author})
     if 'last_modified_by' not in args:
-        args.update({'last_modified_by': user})
+        args.update({'last_modified_by': author})
+
+    if 'email' not in args:
+        args.update({'email': get_email()})
 
     return args
 
@@ -523,8 +543,8 @@ class FileHeaderNewFileCommand(sublime_plugin.WindowCommand):
         header = get_header_content(syntax_type, path)
 
         try:
-            with open(path, 'w+') as f:
-                f.write(header)
+            with open(path, 'w+b') as f:
+                f.write(header.encode('utf-8'))
 
         except Exception as e:
             sublime.error_message(str(e))
@@ -598,15 +618,15 @@ class BackgroundAddHeaderThread(threading.Thread):
         syntax_type = get_syntax_type(self.path)
 
         try:
-            with open(self.path, 'r') as f:
-                file = f.read()
+            with open(self.path, 'rb') as f:
+                file = f.read().decode('utf-8')
 
             if not template_header_exists(file, syntax_type):
                 header_content = get_header_content(
                     syntax_type, self.path, file)
                 contents = get_file_content(file, syntax_type, header_content)
-                with open(self.path, 'w') as f:
-                    f.write(contents)
+                with open(self.path, 'wb') as f:
+                    f.write(contents.encode('utf-8'))
 
         except Exception as e:
             sublime.error_message(str(e))
