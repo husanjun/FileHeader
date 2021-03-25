@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Lime
-# @Date:   2013-10-28 13:39:48
-# @Last Modified by:   hujunjun117@163.com
-# @Last Modified time: 2021/03/18 14:40
-
 import os
 import sys
 import re
