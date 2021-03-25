@@ -441,8 +441,11 @@ def get_syntax_file(syntax_type):
 
 def get_content_index(haystack, needle):
     '''Get the right needle position in haystack'''
-    needle = needle.rstrip('\n').rstrip('\r')
     pos = haystack.find(needle)
+    if pos < 0:
+        needle = needle.rstrip('\n').rstrip('\r')
+        pos = haystack.find(needle)
+
     return pos + len(needle) if pos >= 0 else 0
 
 
